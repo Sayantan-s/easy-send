@@ -19,7 +19,6 @@ type SuccessTemplateResponse struct{
 
 
 func GenerateTranscriptCVS(c *fiber.Ctx) error{
-
 	uploadDir := "./assets"
 	if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
 		return res.Failure(c, res.FalureTemplate{
@@ -59,7 +58,7 @@ func GenerateTranscriptCVS(c *fiber.Ctx) error{
 	}
 	transcriptionId, err := openai.Completions(uploadPath)
 	os.Remove(uploadPath)
-	
+
 	return res.Success(c, res.SuccessTemplate{
 		StatusCode: fiber.StatusCreated,
 		Message: "successfully generated LinkedIn messages",
