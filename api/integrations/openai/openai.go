@@ -3,8 +3,11 @@ package openai
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sync"
+	"time"
 
 	"github.com/sayantan-s/easy-send/config"
 )
@@ -64,16 +67,58 @@ func startComputingTranscriptions(url string)(string, error){
 
     transcriptionId := result["id"]
 
-    return transcriptionId, nil
+    POLLING_URL := TRANSCRIPT_URL + "/" + transcriptionId
+
+    return POLLING_URL, nil
 
 }
 
-func Completions(path string)(string, error){
+func getComputedTranscriptions(pollingUrl string, pollInterval time.Duration, wg *sync.WaitGroup, transcription chan string){
+    defer wg.Done()
+    
+    API_KEY := config.GetConfig("AAI_API_KEY")
+    client := &http.Client{}
+    for{
+        req, _ := http.NewRequest("POST",pollingUrl, nil)
+        req.Header.Set("content-type", "application/json")
+        req.Header.Set("authorization", API_KEY)
+        res, _ := client.Do(req) 
+
+        var result map[string]string
+        json.NewDecoder(res.Body).Decode(&result)
+
+        if result["status"] == "completed" {
+            transcription <- result["text"]
+        }
+        fmt.Println("Polling::", result["error"])
+        res.Body.Close()
+        time.Sleep(pollInterval)
+    }
+}
+
+
+func GetTranscriptionPollingUrl(path string)(string, error){
     uploadUrl, err := uploadFileToAssemblyAI(path);if err != nil{
         return "", err
     }
-    transcriptionId, err := startComputingTranscriptions(uploadUrl);if err != nil{
+    transcriptionPollingUrl, err := startComputingTranscriptions(uploadUrl);if err != nil{
         return "", err
     }
-   return transcriptionId, nil
+
+    pollInterval := 5 * time.Second  
+    resultChan := make(chan string)   
+    
+    var wg sync.WaitGroup
+	wg.Add(1)
+
+    go getComputedTranscriptions(transcriptionPollingUrl, pollInterval, &wg, resultChan)
+
+    go func() {
+		wg.Wait()
+		close(resultChan)
+	}()
+
+    transcriptText := <-resultChan
+    
+    return transcriptText, nil
 }

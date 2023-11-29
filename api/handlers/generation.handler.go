@@ -13,12 +13,12 @@ import (
 )
 
 type SuccessTemplateResponse struct{
-	TranscriptionId string
-	RecordedUrl string
+	TranscriptPollingUrl string `json:"transcriptPollingUrl"`
+	RecordedUrl string `json:"recordedUrl"`
 }
 
 
-func GenerateTranscriptCVS(c *fiber.Ctx) error{
+func GenerateTranscriptionPollingUrl(c *fiber.Ctx) error{
 	uploadDir := "./assets"
 	if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
 		return res.Failure(c, res.FalureTemplate{
@@ -56,14 +56,14 @@ func GenerateTranscriptCVS(c *fiber.Ctx) error{
 			Message: "Unable to upload file",
 		})
 	}
-	transcriptionId, err := openai.Completions(uploadPath)
+	transcriptionPollingUrl, err := openai.GetTranscriptionPollingUrl(uploadPath)
 	os.Remove(uploadPath)
 
 	return res.Success(c, res.SuccessTemplate{
 		StatusCode: fiber.StatusCreated,
 		Message: "successfully generated LinkedIn messages",
 		Data: SuccessTemplateResponse{
-			TranscriptionId: transcriptionId,
+			TranscriptPollingUrl: transcriptionPollingUrl,
 			RecordedUrl: reposnse.SecureURL,
 		},
 	})
