@@ -3,11 +3,8 @@ package openai
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
-	"sync"
-	"time"
 
 	"github.com/sayantan-s/easy-send/config"
 )
@@ -40,7 +37,10 @@ func uploadFileToAssemblyAI(path string) (string,error){
 }
 
 func startComputingTranscriptions(url string)(string, error){
-    values := map[string]string{"audio_url": url}
+    values := map[string]string{
+        "audio_url": url,
+        "webhook_url": "https://c7f0-2409-40f2-1008-7132-c5a8-a577-96f5-daa8.ngrok.io/transcript_CE_webhook",
+    }
     jsonData, err := json.Marshal(values)
     if err != nil {
         return "", err
@@ -73,52 +73,13 @@ func startComputingTranscriptions(url string)(string, error){
 
 }
 
-func getComputedTranscriptions(pollingUrl string, pollInterval time.Duration, wg *sync.WaitGroup, transcription chan string){
-    defer wg.Done()
-    
-    API_KEY := config.GetConfig("AAI_API_KEY")
-    client := &http.Client{}
-    for{
-        req, _ := http.NewRequest("POST",pollingUrl, nil)
-        req.Header.Set("content-type", "application/json")
-        req.Header.Set("authorization", API_KEY)
-        res, _ := client.Do(req) 
-
-        var result map[string]string
-        json.NewDecoder(res.Body).Decode(&result)
-
-        if result["status"] == "completed" {
-            transcription <- result["text"]
-        }
-        fmt.Println("Polling::", result["error"])
-        res.Body.Close()
-        time.Sleep(pollInterval)
-    }
-}
-
-
-func GetTranscriptionPollingUrl(path string)(string, error){
+func SetUpTranscriptions(path string)(string, error){
     uploadUrl, err := uploadFileToAssemblyAI(path);if err != nil{
         return "", err
     }
     transcriptionPollingUrl, err := startComputingTranscriptions(uploadUrl);if err != nil{
         return "", err
     }
-
-    pollInterval := 5 * time.Second  
-    resultChan := make(chan string)   
     
-    var wg sync.WaitGroup
-	wg.Add(1)
-
-    go getComputedTranscriptions(transcriptionPollingUrl, pollInterval, &wg, resultChan)
-
-    go func() {
-		wg.Wait()
-		close(resultChan)
-	}()
-
-    transcriptText := <-resultChan
-    
-    return transcriptText, nil
+    return transcriptionPollingUrl, nil
 }

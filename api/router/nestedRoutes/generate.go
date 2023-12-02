@@ -8,5 +8,6 @@ import (
 func GenerationRoutes(router fiber.Router){
 	rtr := router.Group("/generate")
 	
-	rtr.Post("/transcript_CE", handlers.GenerateTranscriptionPollingUrl)
+	rtr.Post("/transcript_CE", handlers.InitiateTranscriptions)
+	rtr.Post("/transcript_CE_webhook", handlers.GetGeneratedTranscripts)
 }

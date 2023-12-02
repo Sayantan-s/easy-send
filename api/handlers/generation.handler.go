@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -18,7 +19,7 @@ type SuccessTemplateResponse struct{
 }
 
 
-func GenerateTranscriptionPollingUrl(c *fiber.Ctx) error{
+func InitiateTranscriptions(c *fiber.Ctx) error{
 	uploadDir := "./assets"
 	if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
 		return res.Failure(c, res.FalureTemplate{
@@ -56,8 +57,15 @@ func GenerateTranscriptionPollingUrl(c *fiber.Ctx) error{
 			Message: "Unable to upload file",
 		})
 	}
-	transcriptionPollingUrl, err := openai.GetTranscriptionPollingUrl(uploadPath)
+	transcriptionPollingUrl, err := openai.SetUpTranscriptions(uploadPath)
 	os.Remove(uploadPath)
+	
+	if err != nil{
+		return res.Failure(c, res.FalureTemplate{
+			StatusCode: fiber.StatusInternalServerError,
+			Message: "Unable to upload file",
+		})
+	}
 
 	return res.Success(c, res.SuccessTemplate{
 		StatusCode: fiber.StatusCreated,
@@ -66,5 +74,15 @@ func GenerateTranscriptionPollingUrl(c *fiber.Ctx) error{
 			TranscriptPollingUrl: transcriptionPollingUrl,
 			RecordedUrl: reposnse.SecureURL,
 		},
+	})
+}
+
+func GetGeneratedTranscripts(c *fiber.Ctx) error{
+	payload := c.Body()
+	fmt.Println(payload)
+	return res.Success(c, res.SuccessTemplate{
+		StatusCode: fiber.StatusAccepted,
+		Message: "successfully generated LinkedIn messages",
+		Data: "Hello world",
 	})
 }
