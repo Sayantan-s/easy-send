@@ -1,4 +1,4 @@
-package openai
+package aai
 
 import (
 	"bytes"
@@ -39,7 +39,7 @@ func uploadFileToAssemblyAI(path string) (string,error){
 func startComputingTranscriptions(url string)(string, error){
     values := map[string]string{
         "audio_url": url,
-        "webhook_url": "https://c7f0-2409-40f2-1008-7132-c5a8-a577-96f5-daa8.ngrok.io/transcript_CE_webhook",
+        "webhook_url": "https://fad9-2409-40f2-104e-17c-e9b5-a813-76c0-e6dd.ngrok.io/api/generate/transcript_CE_webhook",
     }
     jsonData, err := json.Marshal(values)
     if err != nil {
@@ -73,6 +73,37 @@ func startComputingTranscriptions(url string)(string, error){
 
 }
 
+func getComputedTranscriptions(transcriptId string)(map[string]string, error){
+    
+    AAI_TRANSCRIPT_URL :=  TRANSCRIPT_URL + "/" + transcriptId
+    API_KEY := config.GetConfig("AAI_API_KEY")
+    
+    client := &http.Client{}
+    req, _ := http.NewRequest("GET", AAI_TRANSCRIPT_URL, nil)
+    req.Header.Set("content-type", "application/json")
+    req.Header.Set("authorization", API_KEY)
+    
+    res, err := client.Do(req)
+
+    if err != nil {
+       return nil, err
+    }
+
+    defer res.Body.Close()
+
+    if err != nil {
+       return nil, err
+    }
+
+    var result map[string]string
+    json.NewDecoder(res.Body).Decode(&result)
+
+    return result, nil
+
+}
+
+
+
 func SetUpTranscriptions(path string)(string, error){
     uploadUrl, err := uploadFileToAssemblyAI(path);if err != nil{
         return "", err
@@ -82,4 +113,11 @@ func SetUpTranscriptions(path string)(string, error){
     }
     
     return transcriptionPollingUrl, nil
+}
+
+func FetchTranscriptions(transcriptId string)(string, error){
+    transcriptData, err := getComputedTranscriptions(transcriptId);if err != nil{
+        return "", err
+    }
+    return transcriptData["text"], nil;
 }
