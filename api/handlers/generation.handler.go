@@ -9,13 +9,15 @@ import (
 
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"github.com/gofiber/fiber/v2"
+	database "github.com/sayantan-s/easy-send/db"
 	"github.com/sayantan-s/easy-send/integrations/aai"
 	"github.com/sayantan-s/easy-send/integrations/cloudinary"
+	"github.com/sayantan-s/easy-send/models"
 	"github.com/sayantan-s/easy-send/utils/res"
 )
 
 type SuccessTemplateResponse struct{
-	TranscriptPollingUrl string `json:"transcriptPollingUrl"`
+	TranscriptId string `json:"transcriptPollingUrl"`
 	RecordedUrl string `json:"recordedUrl"`
 }
 
@@ -60,7 +62,7 @@ func InitiateTranscriptions(c *fiber.Ctx) error{
 			Message: "Unable to upload file",
 		})
 	}
-	transcriptionPollingUrl, err := aai.SetUpTranscriptions(uploadPath)
+	transcriptId, err := aai.SetUpTranscriptions(uploadPath)
 	os.Remove(uploadPath)
 	
 	if err != nil{
@@ -70,13 +72,18 @@ func InitiateTranscriptions(c *fiber.Ctx) error{
 		})
 	}
 
-	// db, _  := database.GetInstance()
+	db, _  := database.GetInstance()
+	transcriptRecord := models.Transcription{
+		TranscriptId: transcriptId,	
+		AudioUrl: reposnse.SecureURL,
+	}
+	db.Create(&transcriptRecord)
 
 	return res.Success(c, res.SuccessTemplate{
 		StatusCode: fiber.StatusCreated,
 		Message: "successfully generated LinkedIn messages",
 		Data: SuccessTemplateResponse{
-			TranscriptPollingUrl: transcriptionPollingUrl,
+			TranscriptId: transcriptId,
 			RecordedUrl: reposnse.SecureURL,
 		},
 	})
@@ -105,7 +112,11 @@ func GetGeneratedTranscripts(c *fiber.Ctx) error{
 
 	transcriptId := data["transcript_id"].(string)
 
-	transcriptData, err := aai.FetchTranscriptions(transcriptId)
+	transcriptData, audioUrl, err := aai.FetchTranscriptions(transcriptId)
+
+	fmt.Println(transcriptData)
+
+	fmt.Print(audioUrl)
 
 	if err != nil {
 		return res.Failure(c, res.FalureTemplate{
@@ -114,8 +125,6 @@ func GetGeneratedTranscripts(c *fiber.Ctx) error{
 		})
 	}
 	
-	fmt.Print(transcriptData)
-
 	return res.Success(c, res.SuccessTemplate{
 		StatusCode: fiber.StatusAccepted,
 		Message: "successfully generated transcription",
