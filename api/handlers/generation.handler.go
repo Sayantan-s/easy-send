@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -17,11 +16,9 @@ import (
 )
 
 type SuccessTemplateResponse struct{
-	TranscriptId string `json:"transcriptPollingUrl"`
+	TranscriptId string `json:"transcriptId"`
 	RecordedUrl string `json:"recordedUrl"`
 }
-
-
 
 
 func InitiateTranscriptions(c *fiber.Ctx) error{
@@ -74,6 +71,7 @@ func InitiateTranscriptions(c *fiber.Ctx) error{
 	}
 
 	db, _  := database.GetInstance()
+
 	transcriptRecord := models.Transcription{
 		TranscriptId: transcriptId,	
 		AudioUrl: reposnse.SecureURL,
@@ -120,11 +118,7 @@ func GetGeneratedTranscripts(c *fiber.Ctx) error{
 
 	transcriptId := data["transcript_id"].(string)
 
-	transcriptData, audioUrl, err := aai.FetchTranscriptions(transcriptId)
-
-	fmt.Println(transcriptData)
-
-	fmt.Print(audioUrl)
+	transcriptData, err := aai.FetchTranscriptions(transcriptId)
 
 	if err != nil {
 		return res.Failure(c, res.FalureTemplate{
@@ -132,10 +126,16 @@ func GetGeneratedTranscripts(c *fiber.Ctx) error{
 			Message: "Unable to process transcription",
 		})
 	}
+
+	db, _  := database.GetInstance()
+	var transcriptionRecord models.Transcription
+	db.First(&transcriptionRecord, "transcript_id = ?", transcriptId)
+	transcriptionRecord.Transcription = transcriptData
+	db.Save(&transcriptionRecord)
 	
 	return res.Success(c, res.SuccessTemplate{
 		StatusCode: fiber.StatusAccepted,
 		Message: "successfully generated transcription",
-		Data: "Hello world",
+		Data: nil,
 	})
 }

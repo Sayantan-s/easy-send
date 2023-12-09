@@ -39,7 +39,7 @@ func uploadFileToAssemblyAI(path string) (string,error){
 func startComputingTranscriptions(url string)(string, error){
     values := map[string]string{
         "audio_url": url,
-        "webhook_url": "https://e655-2409-40f2-1027-653a-311b-9546-64e5-682b.ngrok.io/api/generate/transcript_CE_webhook",
+        "webhook_url": "https://7ce5-2409-40f2-1027-653a-d179-e7e-fffa-c8ea.ngrok.io/api/generate/transcript_CE_webhook",
     }
     jsonData, err := json.Marshal(values)
     if err != nil {
@@ -110,17 +110,13 @@ func SetUpTranscriptions(path string)(string, error){
     transcriptionPollingUrl, err := startComputingTranscriptions(uploadUrl);if err != nil{
         return "", err
     }
-    
     return transcriptionPollingUrl, nil
 }
 
-func FetchTranscriptions(transcriptId string)(string, string, error){
+func FetchTranscriptions(transcriptId string)(string, error){
     transcriptData, err := getComputedTranscriptions(transcriptId);if err != nil{
-        return "", "", err
+        return "", err
     }
-    
     transcript := transcriptData["text"]
-    audio_url := transcriptData["audio_url"]
-
-    return transcript, audio_url, nil;
+    return transcript, nil;
 }
