@@ -52,7 +52,8 @@ func InitiateTranscriptions(c *fiber.Ctx) error{
 	fileHeader, _ := c.FormFile("file")
 	fileDoc, _ := fileHeader.Open()
 	ctx := context.Background()
-	reposnse, err := cloudinary.GetCient().Upload.Upload(ctx, fileDoc, uploader.UploadParams{
+	bucket := cloudinary.GetCient()
+	reposnse, err := bucket.Upload.Upload(ctx, fileDoc, uploader.UploadParams{
 		Folder: "media",
 		ResourceType: "auto",
 	})
@@ -68,7 +69,7 @@ func InitiateTranscriptions(c *fiber.Ctx) error{
 	if err != nil{
 		return res.Failure(c, res.FalureTemplate{
 			StatusCode: fiber.StatusInternalServerError,
-			Message: "Unable to upload file",
+			Message: "Unable to process file",
 		})
 	}
 
@@ -77,7 +78,14 @@ func InitiateTranscriptions(c *fiber.Ctx) error{
 		TranscriptId: transcriptId,	
 		AudioUrl: reposnse.SecureURL,
 	}
-	db.Create(&transcriptRecord)
+	errTranscript := db.Create(&transcriptRecord).Error
+	
+	if errTranscript != nil{
+		return res.Failure(c, res.FalureTemplate{
+			StatusCode: fiber.StatusInternalServerError,
+			Message: "Unable to process file",
+		})
+	}
 
 	return res.Success(c, res.SuccessTemplate{
 		StatusCode: fiber.StatusCreated,
