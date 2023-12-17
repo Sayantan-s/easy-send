@@ -1,7 +1,6 @@
 package database
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/jinzhu/gorm"
@@ -27,8 +26,6 @@ func GetInstance() (*gorm.DB, error) {
 
 func initDB() (*gorm.DB, error) {
 	connectionString := config.GetConfig("PG_CONNECTION_STRING")
-
-    fmt.Println("connection:: 1", connectionString)
     
 	db, err := gorm.Open("postgres", connectionString)
     
@@ -36,11 +33,7 @@ func initDB() (*gorm.DB, error) {
         return nil, err
     }
 
-    fmt.Println("connection:: 2")
-
     models.AutoMigrateTranscripts(db)
-
-    fmt.Println("connection:: 3")
 
     return db, nil
 }

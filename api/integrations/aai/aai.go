@@ -39,7 +39,7 @@ func uploadFileToAssemblyAI(path string) (string,error){
 func startComputingTranscriptions(url string)(string, error){
     values := map[string]string{
         "audio_url": url,
-        "webhook_url": "https://7ce5-2409-40f2-1027-653a-d179-e7e-fffa-c8ea.ngrok.io/api/generate/transcript_CE_webhook",
+        "webhook_url": "https://e0b2-106-51-62-186.ngrok.io/api/generate/transcript_CE_webhook",
     }
     jsonData, err := json.Marshal(values)
     if err != nil {
@@ -57,10 +57,6 @@ func startComputingTranscriptions(url string)(string, error){
     }
 
     defer res.Body.Close()
-
-    if err != nil {
-       return "", err
-    }
 
     var result map[string]string
     json.NewDecoder(res.Body).Decode(&result)

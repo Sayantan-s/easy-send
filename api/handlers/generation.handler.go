@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -11,6 +12,7 @@ import (
 	database "github.com/sayantan-s/easy-send/db"
 	"github.com/sayantan-s/easy-send/integrations/aai"
 	"github.com/sayantan-s/easy-send/integrations/cloudinary"
+	"github.com/sayantan-s/easy-send/integrations/openai"
 	"github.com/sayantan-s/easy-send/models"
 	"github.com/sayantan-s/easy-send/utils/res"
 )
@@ -89,7 +91,7 @@ func InitiateTranscriptions(c *fiber.Ctx) error{
 		StatusCode: fiber.StatusCreated,
 		Message: "successfully generated LinkedIn messages",
 		Data: SuccessTemplateResponse{
-			TranscriptId: transcriptId,
+			TranscriptId: transcriptRecord.ID.String(),
 			RecordedUrl: reposnse.SecureURL,
 		},
 	})
@@ -132,6 +134,22 @@ func GetGeneratedTranscripts(c *fiber.Ctx) error{
 	db.First(&transcriptionRecord, "transcript_id = ?", transcriptId)
 	transcriptionRecord.Transcription = transcriptData
 	db.Save(&transcriptionRecord)
+
+	openAiPrompt := fmt.Sprintf(`
+		Write 5 cold emails based on this below text:
+		%s
+	`, transcriptData)
+
+	requestPayload := fmt.Sprintf(`{
+		"model": "gpt-3.5-turbo",
+		"messages": [
+			{"role": "system", "content": "You are a helpful assistant."},
+			{"role": "user", "content": "%s"}
+		],
+		"temperature": 0.7
+	}`, openAiPrompt)
+
+	openai.Completions(requestPayload)
 	
 	return res.Success(c, res.SuccessTemplate{
 		StatusCode: fiber.StatusAccepted,
