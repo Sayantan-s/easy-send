@@ -1,5 +1,3 @@
-# Easy-Send
-
 ### 🖋️ Topic
 
 <b>Smart blogs:</b> Transform Your recordings into Blogs Instantly!.
