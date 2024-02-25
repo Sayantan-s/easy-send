@@ -9,9 +9,12 @@ require (
 )
 
 require (
+	github.com/AssemblyAI/assemblyai-go-sdk v1.1.0 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
+	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/cloudinary/cloudinary-go/v2 v2.6.0 // indirect
 	github.com/creasty/defaults v1.7.0 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gorilla/schema v1.2.1 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20231201235250-de7065d80cb9 // indirect
@@ -35,4 +38,5 @@ require (
 	golang.org/x/text v0.14.0 // indirect
 	gorm.io/driver/postgres v1.5.4 // indirect
 	gorm.io/gorm v1.25.5 // indirect
+	nhooyr.io/websocket v1.8.7 // indirect
 )

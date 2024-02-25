@@ -1,5 +1,5 @@
 const GeneratePdf = () => {
-  return <div></div>;
+  return <div>Generate</div>;
 };
 
 export default GeneratePdf;
